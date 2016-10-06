@@ -91,12 +91,12 @@ AuthorizeGithub.prototype.isAuthorized = function() {
       });
 
       // Check if authenticated user is a member of the master org if one is set
-      if (_this.githubOrg) {
+      if (_this.githubOrg) {  // TODO: add another config setting to specifically enable this functionality
         github.users.getOrgs({}, function(err, res) {
           if (err) {
             reject(err);
           } else {
-            const isMemberOfMasterOrg = _.find(res, { login: _this.githubOrg }) === undefined ? false : true; // NOTE: multi purposing githubOrg.
+            var isMemberOfMasterOrg = _.find(res, { login: _this.githubOrg }) === undefined ? false : true;
             if (!isMemberOfMasterOrg) {
               resolve(false);
             } else if (this.scope == 'read') {
@@ -104,8 +104,8 @@ AuthorizeGithub.prototype.isAuthorized = function() {
               resolve(true);              // Short circuit github auth and return true for reads by master org members
             }
           }
-        }
-      });
+        });
+      }
 
       // if member of the master org and not a read then
       // check whether user is authorized for the scope provided.
