@@ -92,7 +92,7 @@ AuthorizeGithub.prototype.isAuthorized = function() {
 
       // Check if authenticated user is a member of the master org if one is set
       logger.log('githuborg: ', _this.githubOrg);
-      logger.log('scope: ', this.scope);
+      logger.log('scope: ', _this.scope);
       if (_this.githubOrg) {  // TODO: add another config setting to specifically enable this functionality
         github.users.getOrgs({}, function(err, res) {
           if (err) {
@@ -102,7 +102,7 @@ AuthorizeGithub.prototype.isAuthorized = function() {
             logger.log('isMemberOfMasterOrg', isMemberOfMasterOrg);
             if (!isMemberOfMasterOrg) {
               resolve(false);
-            } else if (this.scope == 'read') {
+            } else if (_this.scope == 'read') {
               logger.log('short circuit success');
               resolve(true);              // Short circuit github auth and return true for reads by master org members
             }
