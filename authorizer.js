@@ -96,15 +96,15 @@ AuthorizeGithub.prototype.isAuthorized = function() {
       if (_this.githubOrg) {  // TODO: add another config setting to specifically enable this functionality
         github.users.getOrgs({}, function(err, res) {
           if (err) {
-            reject(err);
+            return reject(err);
           } else {
             var isMemberOfMasterOrg = _.find(res, { login: _this.githubOrg }) === undefined ? false : true;
             logger.log('isMemberOfMasterOrg', isMemberOfMasterOrg);
             if (!isMemberOfMasterOrg) {
-              resolve(false);
+              return resolve(false);
             } else if (_this.scope == 'read') {
               logger.log('short circuit success');
-              resolve(true);              // Short circuit github auth and return true for reads by master org members
+              return resolve(true);              // Short circuit github auth and return true for reads by master org members
             }
           }
         });
