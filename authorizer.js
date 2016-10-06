@@ -90,6 +90,19 @@ AuthorizeGithub.prototype.isAuthorized = function() {
         token: _this.token
       });
 
+      var fallbackAuth = function() {
+        logger.log('falling back to older auth');
+        // if member of the master org and not a read then
+        // check whether user is authorized for the scope provided.
+        github.repos.get({user: githubParams.org, repo: githubParams.repo}, function(err, res) {
+          if (err) {
+            if (err.code == 404) return resolve(false);
+            else return reject(err);
+          }
+          else return _this._handleGithubResponse(res, resolve, reject);
+        });
+      };
+
       // Check if authenticated user is a member of the master org if one is set
       logger.log('githuborg: ', _this.githubOrg);
       logger.log('scope: ', _this.scope);
@@ -105,20 +118,14 @@ AuthorizeGithub.prototype.isAuthorized = function() {
             } else if (_this.scope == 'read') {
               logger.log('short circuit success');
               return resolve(true);              // Short circuit github auth and return true for reads by master org members
+            } else {
+              fallbackAuth();
             }
           }
         });
+      } else {
+        fallbackAuth();
       }
-      logger.log('falling back to older auth');
-      // if member of the master org and not a read then
-      // check whether user is authorized for the scope provided.
-      github.repos.get({user: githubParams.org, repo: githubParams.repo}, function(err, res) {
-        if (err) {
-          if (err.code == 404) resolve(false);
-          else reject(err);
-        }
-        else _this._handleGithubResponse(res, resolve, reject);
-      });
     }).catch(function(err) {
       reject(err);
     });
