@@ -80,7 +80,7 @@ AuthorizeGithub.prototype.isAuthorized = function() {
     _this.loadPackageJSON().then(function(packageJson) {
       return _this.parseGitUrl(packageJson);
     }).then(function(githubParams) {
-      if (_this.githubOrg && githubParams.org !== _this.githubOrg) return reject(Error('invalid organization name'));
+      if (_this.githubOrg && githubParams.org !== _this.githubOrg && this.scope === 'publish') return reject(Error('invalid organization name'));
 
       var github = createGithubApi(_this);
 
@@ -90,6 +90,24 @@ AuthorizeGithub.prototype.isAuthorized = function() {
         token: _this.token
       });
 
+      // Check if authenticated user is a member of the master org if one is set
+      if (_this.githubOrg) {
+        github.users.getOrgs({}, function(err, res) {
+          if (err) {
+            reject(err);
+          } else {
+            const isMemberOfMasterOrg = _.find(res, { login: _this.githubOrg }) === undefined ? false : true; // NOTE: multi purposing githubOrg.
+            if (!isMemberOfMasterOrg) {
+              resolve(false);
+            } else if (this.scope == 'read') {
+              logger.log('short circuit success');
+              resolve(true);              // Short circuit github auth and return true for reads by master org members
+            }
+          }
+        }
+      });
+
+      // if member of the master org and not a read then
       // check whether user is authorized for the scope provided.
       github.repos.get({user: githubParams.org, repo: githubParams.repo}, function(err, res) {
         if (err) {
