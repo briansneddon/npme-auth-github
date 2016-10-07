@@ -3,7 +3,7 @@ var parseUrl = require('url'),
   _ = require('lodash'),
   createGithubApi = require('./create-github-api.js');
 
-var logger = console.log;
+var logger = console;
 
 function AuthenticateGithub(opts) {
   _.extend(this, {

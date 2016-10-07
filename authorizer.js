@@ -7,7 +7,7 @@ var parseUrl = require('url'),
   Session = require('./session'),
   u = require('url');
 
-var logger = console.log;
+var logger = console;
 
 function AuthorizeGithub(opts) {
   _.extend(this, {
