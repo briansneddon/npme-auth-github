@@ -1,21 +1,21 @@
 var parseUrl = require('url'),
-  logger = require('@npm/enterprise-configurator').logger(),
   Promise = require('bluebird'),
   _ = require('lodash'),
-  createGithubApi = require('./create-github-api.js'),
-  config = require('@npm/enterprise-configurator').Config();
+  createGithubApi = require('./create-github-api.js');
+
+var logger = console.log;
 
 function AuthenticateGithub(opts) {
   _.extend(this, {
     packagePath: null, // required, name-spaced package name.
     debug: false,
-    githubHost: config.githubHost,
+    githubHost: null,
     githubPathPrefix: '/api/v3',
-    githubOrg: config.githubOrg,
+    githubOrg: null,
     // label the token that we generate.
     note: 'npm Enterprise login',
     noteUrl: 'https://www.npmjs.org'
-  }, opts);
+  }, opts, require('@npm/enterprise-configurator').Config());
 }
 
 // Reach out to GitHub API to authenticate the user. Create an authorization

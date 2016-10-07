@@ -1,13 +1,13 @@
-var logger = require('@npm/enterprise-configurator').logger(),
-  parseUrl = require('url'),
+var parseUrl = require('url'),
   parseGitUrl = require('github-url-from-git'),
   Promise = require('bluebird'),
   _ = require('lodash'),
   request = require('request'),
   createGithubApi = require('./create-github-api.js'),
-  config = require('@npm/enterprise-configurator').Config(),
   Session = require('./session'),
   u = require('url');
+
+var logger = console.log;
 
 function AuthorizeGithub(opts) {
   _.extend(this, {
@@ -15,12 +15,12 @@ function AuthorizeGithub(opts) {
     token: null, // GitHub API Key.
     scope: null, // read, publish.
     debug: false,
-    frontDoorHost: config.frontDoorHost,
-    githubHost: config.githubHost,
-    githubOrg: config.githubOrg,
+    frontDoorHost: null,
+    githubHost: null,
+    githubOrg: null,
     untrustedPackageJson: null,
     githubPathPrefix: '/api/v3'
-  }, opts);
+  }, opts, require('@npm/enterprise-configurator').Config());
 }
 
 // Given a credentials object from the client,
@@ -158,7 +158,7 @@ AuthorizeGithub.prototype.loadPackageJSON = function() {
   var _this = this;
 
   return new Promise(function(resolve, reject) {
-    request.get(u.resolve(_this.frontDoorHost, _this.packagePath + '?sharedFetchSecret=' + config.sharedFetchSecret), {
+    request.get(u.resolve(_this.frontDoorHost, _this.packagePath + '?sharedFetchSecret=' + _this.sharedFetchSecret), {
       json: true
     }, function(err, result) {
       if (err) reject(err);

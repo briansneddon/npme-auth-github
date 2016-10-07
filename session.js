@@ -12,7 +12,7 @@ function SessionGithub(opts) {
     githubHost: 'api.github.com',
     debug: true,
     githubPathPrefix: '/api/v3'
-  }, require('@npm/enterprise-configurator').Config(), opts)
+  }, opts, require('@npm/enterprise-configurator').Config())
 }
 
 SessionGithub.prototype.get = function(key, cb) {
