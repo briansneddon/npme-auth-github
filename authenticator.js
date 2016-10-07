@@ -15,7 +15,7 @@ function AuthenticateGithub(opts) {
     // label the token that we generate.
     note: 'npm Enterprise login',
     noteUrl: 'https://www.npmjs.org'
-  }, opts, require('@npm/enterprise-configurator').Config());
+  }, require('@npm/enterprise-configurator').Config(), opts);
 }
 
 // Reach out to GitHub API to authenticate the user. Create an authorization

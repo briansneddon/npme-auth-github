@@ -20,7 +20,7 @@ function AuthorizeGithub(opts) {
     githubOrg: null,
     untrustedPackageJson: null,
     githubPathPrefix: '/api/v3'
-  }, opts, require('@npm/enterprise-configurator').Config());
+  }, require('@npm/enterprise-configurator').Config(), opts);
 }
 
 // Given a credentials object from the client,
