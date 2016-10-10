@@ -22,6 +22,5 @@ module.exports = function(githubParams) {
     githubOpts.host = parsedUrl.host.replace(/:.*$/, '');
     githubOpts.pathPrefix = githubParams.githubPathPrefix;
   }
-
   return new GithubApi(githubOpts);
 };

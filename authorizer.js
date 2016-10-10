@@ -28,7 +28,7 @@ function AuthorizeGithub(opts) {
 // authorization.
 AuthorizeGithub.prototype.authorize = function(credentials, cb) {
   if (!credentials) return cb(null, false);
-  logger.log('authorize with credentials', credentials);
+  // logger.log('authorize with credentials', credentials);
 
   // path to package.json in front-door.
   this.packagePath = credentials.path;
@@ -45,7 +45,7 @@ AuthorizeGithub.prototype.authorize = function(credentials, cb) {
   try {
     this.token = credentials.headers.authorization.replace('Bearer ', '');
   } catch (err) {
-    logger.log('error parsing bearer token', err);
+    // logger.log('error parsing bearer token', err);
     return cb(null, false);
   }
 
@@ -57,15 +57,15 @@ AuthorizeGithub.prototype.authorize = function(credentials, cb) {
     return cb(Error('unsupported method'), null);
   }
 
-  logger.log('attempting to authorize', this.scope)
+  // logger.log('attempting to authorize', this.scope)
 
   this.isAuthorized()
     .then(function(authorized) {
-      logger.log('authorization response', authorized);
+      // logger.log('authorization response', authorized);
       cb(null, authorized);
     })
     .catch(function(err) {
-      logger.log('authorization error', err);
+      // logger.log('authorization error', err);
       cb(err);
     });
 };
@@ -80,8 +80,8 @@ AuthorizeGithub.prototype.isAuthorized = function() {
     _this.loadPackageJSON().then(function(packageJson) {
       return _this.parseGitUrl(packageJson);
     }).then(function(githubParams) {
-      if (_this.githubOrg && githubParams.org !== _this.githubOrg && this.scope === 'publish') return reject(Error('invalid organization name'));
-
+      // console.log('DBG: ', _this.githubOrg, githubParams.org, _this.scope);
+      if (_this.githubOrg && githubParams.org !== _this.githubOrg && _this.scope === 'publish') return reject(Error('invalid organization name'));
       var github = createGithubApi(_this);
 
       // setup github to use OAuth Access Token.
@@ -91,7 +91,7 @@ AuthorizeGithub.prototype.isAuthorized = function() {
       });
 
       var fallbackAuth = function() {
-        logger.log('falling back to older auth');
+        // logger.log('falling back to older auth');
         // if member of the master org and not a read then
         // check whether user is authorized for the scope provided.
         github.repos.get({user: githubParams.org, repo: githubParams.repo}, function(err, res) {
@@ -102,21 +102,20 @@ AuthorizeGithub.prototype.isAuthorized = function() {
           else return _this._handleGithubResponse(res, resolve, reject);
         });
       };
-
       // Check if authenticated user is a member of the master org if one is set
-      logger.log('githuborg: ', _this.githubOrg);
-      logger.log('scope: ', _this.scope);
+      // logger.log('githuborg: ', _this.githubOrg);
+      // logger.log('scope: ', _this.scope);
       if (_this.githubOrg) {  // TODO: add another config setting to specifically enable this functionality
         github.users.getOrgs({}, function(err, res) {
           if (err) {
             return reject(err);
           } else {
             var isMemberOfMasterOrg = _.find(res, { login: _this.githubOrg }) === undefined ? false : true;
-            logger.log('isMemberOfMasterOrg', isMemberOfMasterOrg);
+            // logger.log('isMemberOfMasterOrg', isMemberOfMasterOrg);
             if (!isMemberOfMasterOrg) {
               return resolve(false);
             } else if (_this.scope == 'read') {
-              logger.log('short circuit success');
+              // logger.log('short circuit success');
               return resolve(true);              // Short circuit github auth and return true for reads by master org members
             } else {
               fallbackAuth();

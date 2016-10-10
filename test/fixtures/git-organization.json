@@ -1,0 +1,15 @@
+[
+    {
+        "avatar_url": "https://avatars.githubusercontent.com/u/12345?v=3",
+        "description": null,
+        "events_url": "https://api.github.com/orgs/npm-test/events",
+        "hooks_url": "https://api.github.com/orgs/npm-test/hooks",
+        "id": 608113,
+        "issues_url": "https://api.github.com/orgs/npm-test/issues",
+        "login": "npm-test",
+        "members_url": "https://api.github.com/orgs/npm-test/members{/member}",
+        "public_members_url": "https://api.github.com/orgs/npm-test/public_members{/member}",
+        "repos_url": "https://api.github.com/orgs/npm-test/repos",
+        "url": "https://api.github.com/orgs/npm-test"
+    }
+]

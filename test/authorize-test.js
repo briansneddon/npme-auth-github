@@ -1,5 +1,6 @@
+/* eslint-disable one-var,import/no-extraneous-dependencies,new-cap,func-names,space-before-function-paren,prefer-arrow-callback,prefer-template,quote-props,prefer-const,max-len,no-var,vars-on-top */
 var config = require('@npm/enterprise-configurator').Config({
-    headless: true
+    headless: true,
   }),
   lab = require('lab'),
   Lab = exports.lab = lab.script(),
@@ -12,14 +13,13 @@ var config = require('@npm/enterprise-configurator').Config({
   redis = require('redis');
 
 Lab.experiment('parseGitUrl', function() {
-
   Lab.test('it parses url and returns components for github api', function(done) {
     var ga = new AuthorizeGithub({
-      debug: false
+      debug: false,
     });
 
     ga.parseGitUrl({
-      repository: { url: 'http://github.npm.com/npm/thumbd.git' }
+      repository: { url: 'http://github.npm.com/npm/thumbd.git' },
     }).done(function(params) {
       Code.expect(params.org).to.equal('npm');
       Code.expect(params.repo).to.equal('thumbd');
@@ -29,11 +29,11 @@ Lab.experiment('parseGitUrl', function() {
 
   Lab.test('it gracefully handles an invalid url', function(done) {
     var ga = new AuthorizeGithub({
-      debug: false
+      debug: false,
     });
 
     ga.parseGitUrl({
-      repository: { url: 'github.com/npm' }
+      repository: { url: 'github.com/npm' },
     }).catch(function(err) {
       Code.expect(err.message).to.match(/does not appear/);
       done();
@@ -42,7 +42,7 @@ Lab.experiment('parseGitUrl', function() {
 
   Lab.test('it gracefully handles a missing url', function(done) {
     var ga = new AuthorizeGithub({
-      debug: false
+      debug: false,
     });
 
     ga.parseGitUrl().catch(function(err) {
@@ -54,11 +54,11 @@ Lab.experiment('parseGitUrl', function() {
   Lab.test('it supports git:// format url', function(done) {
     var ga = new AuthorizeGithub({
       githubHost: 'github.npmjs.com',
-      debug: false
+      debug: false,
     });
 
     ga.parseGitUrl({
-      repository: {url: 'git://github.npmjs.com/npm/foobar'}
+      repository: { url: 'git://github.npmjs.com/npm/foobar' },
     }).done(function(params) {
       Code.expect(params.org).to.equal('npm');
       Code.expect(params.repo).to.equal('foobar');
@@ -69,11 +69,11 @@ Lab.experiment('parseGitUrl', function() {
   Lab.test('it defaults to https if git:// format url is provided', function(done) {
     var ga = new AuthorizeGithub({
       githubHost: 'github.npmjs.com',
-      debug: false
+      debug: false,
     });
 
     ga.parseGitUrl({
-      repository: {url: 'git://github.npmjs.com/npm/foobar'}
+      repository: { url: 'git://github.npmjs.com/npm/foobar' },
     }).done(function(params) {
       Code.expect(params.org).to.equal('npm');
       Code.expect(params.repo).to.equal('foobar');
@@ -84,11 +84,11 @@ Lab.experiment('parseGitUrl', function() {
   Lab.test('it supports the git@ format url', function(done) {
     var ga = new AuthorizeGithub({
       githubHost: 'github.npmjs.com',
-      debug: false
+      debug: false,
     });
 
     ga.parseGitUrl({
-      repository: {url: 'git@github.npmjs.com:npm/foobar.git'}
+      repository: { url: 'git@github.npmjs.com:npm/foobar.git' },
     }).done(function(params) {
       Code.expect(params.org).to.equal('npm');
       Code.expect(params.repo).to.equal('foobar');
@@ -98,23 +98,22 @@ Lab.experiment('parseGitUrl', function() {
 });
 
 Lab.experiment('loadPackageJSON', function() {
-
   Lab.test('returns parsed package.json', function(done) {
     var ga = new AuthorizeGithub({
       frontDoorHost: 'http://frontdoor.npmjs.com',
       packagePath: '/@npm/foobar',
-      debug: false
+      debug: false,
     });
 
     var packageApi = nock('http://frontdoor.npmjs.com')
-      .get('/@npm/foobar?sharedFetchSecret=' + config.sharedFetchSecret)
-      .reply(200, JSON.stringify({
-        repository: { url: 'http://github.npm.com/npm/thumbd.git' }
-      }));
+    .get('/@npm/foobar?sharedFetchSecret=' + config.sharedFetchSecret)
+    .reply(200, JSON.stringify({
+      repository: { url: 'http://github.npm.com/npm/thumbd.git' },
+    }));
 
-    ga.loadPackageJSON().done(function(package) {
-      Code.expect(package.repository.url).to
-        .equal('http://github.npm.com/npm/thumbd.git');
+    ga.loadPackageJSON().done(function(npmPackage) {
+      Code.expect(npmPackage.repository.url).to
+      .equal('http://github.npm.com/npm/thumbd.git');
       packageApi.done();
       done();
     });
@@ -126,7 +125,7 @@ Lab.experiment('loadPackageJSON', function() {
     var ga = new AuthorizeGithub({
       frontDoorHost: 'http://frontdoor.npmjs.com',
       packagePath: '/@npm/foobar',
-      debug: false
+      debug: false,
     });
 
     ga.loadPackageJSON().catch(function(err) {
@@ -136,20 +135,19 @@ Lab.experiment('loadPackageJSON', function() {
   });
 
   Lab.test('uses port parsed from githubHost', function(done) {
-
     // HTTP response for loading package.json
     var packageApi = nock('http://frontdoor.npmjs.com')
-      .get('/@npm-test/foo?sharedFetchSecret=' + config.sharedFetchSecret)
-      .reply(200, JSON.stringify({
-        repository: { url: 'http://github.npmjs.com/npm-test/foo.git' }
-      }));
+    .get('/@npm-test/foo?sharedFetchSecret=' + config.sharedFetchSecret)
+    .reply(200, JSON.stringify({
+      repository: { url: 'http://github.npmjs.com/npm-test/foo.git' },
+    }));
 
     // HTTP response for user with read-only permissions.
     var githubApi = nock('https://github.example.com:4444')
-      .get('/api/v3/repos/npm-test/foo?access_token=banana')
-      .reply(200, fs.readFileSync('./test/fixtures/read-only.json'), {
-        'content-type': 'application/json; charset=utf-8'
-      })
+    .get('/api/v3/repos/npm-test/foo?access_token=banana')
+    .reply(200, fs.readFileSync('./test/fixtures/read-only.json'), {
+      'content-type': 'application/json; charset=utf-8',
+    });
 
     var ga = new AuthorizeGithub({
       frontDoorHost: 'http://frontdoor.npmjs.com',
@@ -157,7 +155,7 @@ Lab.experiment('loadPackageJSON', function() {
       packagePath: '/@npm-test/foo',
       token: 'banana',
       scope: 'read',
-      debug: false
+      debug: false,
     });
 
     ga.isAuthorized().done(function(authorized) {
@@ -168,258 +166,604 @@ Lab.experiment('loadPackageJSON', function() {
       done();
     });
   });
-
 });
 
+
 Lab.experiment('isAuthorized', function() {
-
-  Lab.test('authorization succeeds if scope read, and user can pull', function(done) {
-
-    // HTTP response for loading package.json
-    var packageApi = nock('http://frontdoor.npmjs.com')
+  Lab.experiment('no githubOrg', function () {
+    Lab.test('authorization succeeds if scope read, and user can pull', function(done) {
+      // HTTP response for loading package.json
+      var packageApi = nock('http://frontdoor.npmjs.com')
       .get('/@npm-test/foo?sharedFetchSecret=' + config.sharedFetchSecret)
       .reply(200, JSON.stringify({
-        repository: { url: 'http://github.npmjs.com/npm-test/foo.git' }
+        repository: { url: 'http://github.npmjs.com/npm-test/foo.git' },
       }));
 
-    // HTTP response for user with read-only permissions.
-    var githubApi = nock('https://github.example.com')
+      // HTTP response for user with read-only permissions.
+      var githubApi = nock('https://github.example.com')
       .get('/api/v3/repos/npm-test/foo?access_token=banana')
       .reply(200, fs.readFileSync('./test/fixtures/read-only.json'), {
-        'content-type': 'application/json; charset=utf-8'
-      })
+        'content-type': 'application/json; charset=utf-8',
+      });
 
-    var ga = new AuthorizeGithub({
-      frontDoorHost: 'http://frontdoor.npmjs.com',
-      packagePath: '/@npm-test/foo',
-      token: 'banana',
-      scope: 'read',
-      debug: false
+      var ga = new AuthorizeGithub({
+        frontDoorHost: 'http://frontdoor.npmjs.com',
+        packagePath: '/@npm-test/foo',
+        githubHost: 'https://github.example.com',
+        token: 'banana',
+        scope: 'read',
+        debug: false,
+      });
+
+      ga.isAuthorized().done(function(authorized) {
+        assert(authorized);
+
+        packageApi.done();
+        githubApi.done();
+        done();
+      });
     });
 
-    ga.isAuthorized().done(function(authorized) {
-      assert(authorized);
-
-      packageApi.done();
-      githubApi.done();
-      done();
-    });
-  });
-
-  Lab.test('authorization fails if repo is not found and permissions are read', function(done) {
-
-    // HTTP response for loading package.json
-    var packageApi = nock('http://frontdoor.npmjs.com')
+    Lab.test('authorization fails if repo is not found and permissions are read', function(done) {
+      // HTTP response for loading package.json
+      var packageApi = nock('http://frontdoor.npmjs.com')
       .get('/@npm-test/foo?sharedFetchSecret=' + config.sharedFetchSecret)
       .reply(200, JSON.stringify({
-        repository: { url: 'http://github.npmjs.com/npm-test/foo.git' }
+        repository: { url: 'http://github.npmjs.com/npm-test/foo.git' },
       }));
 
-    // HTTP response for user with read-only permissions
-    var githubApi = nock('https://github.example.com')
+      // HTTP response for user with read-only permissions
+      var githubApi = nock('https://github.example.com')
       .get('/api/v3/repos/npm-test/foo?access_token=banana')
-      .reply(404)
+      .reply(404);
 
-    var ga = new AuthorizeGithub({
-      frontDoorHost: 'http://frontdoor.npmjs.com',
-      packagePath: '/@npm-test/foo',
-      token: 'banana',
-      scope: 'read',
-      debug: false
+      var ga = new AuthorizeGithub({
+        frontDoorHost: 'http://frontdoor.npmjs.com',
+        packagePath: '/@npm-test/foo',
+        githubHost: 'https://github.example.com',
+        token: 'banana',
+        scope: 'read',
+        debug: false,
+      });
+
+      ga.isAuthorized().done(function(authorized) {
+        assert.equal(authorized, false);
+
+        packageApi.done();
+        githubApi.done();
+        done();
+      });
     });
 
-    ga.isAuthorized().done(function(authorized) {
-      assert.equal(authorized, false);
 
-      packageApi.done();
-      githubApi.done();
-      done();
-    });
-  });
-
-  Lab.test('authorization succeeds on publish, if repo is not found', function(done) {
-    // HTTP response for loading package.json
-    var packageApi = nock('http://frontdoor.npmjs.com')
+    Lab.test('authorization succeeds on publish, if repo is not found', function(done) {
+      // HTTP response for loading package.json
+      var packageApi = nock('http://frontdoor.npmjs.com')
       .get('/@npm-test/foo?sharedFetchSecret=' + config.sharedFetchSecret)
       .reply(404);
 
-    // HTTP response for use with read/write permissions on repo.
-    var githubApi = nock('https://github.example.com')
+      // HTTP response for use with read/write permissions on repo.
+      var githubApi = nock('https://github.example.com')
       .get('/api/v3/repos/npm-test/foo?access_token=banana')
       .reply(200, fs.readFileSync('./test/fixtures/read-write.json'), {
-        'content-type': 'application/json; charset=utf-8'
-      })
+        'content-type': 'application/json; charset=utf-8',
+      });
 
-    var ga = new AuthorizeGithub({
-      frontDoorHost: 'http://frontdoor.npmjs.com',
-      packagePath: '/@npm-test/foo',
-      token: 'banana',
-      scope: 'publish',
-      untrustedPackageJson: {
-        'dist-tags': {latest: '0.0.0'},
-        versions: {
-          '0.0.0': {
-            repository: { url: 'http://github.npmjs.com/npm-test/foo.git' }
-          }
-        }
-      },
-      debug: false
+      var ga = new AuthorizeGithub({
+        frontDoorHost: 'http://frontdoor.npmjs.com',
+        packagePath: '/@npm-test/foo',
+        githubHost: 'https://github.example.com',
+        token: 'banana',
+        scope: 'publish',
+        untrustedPackageJson: {
+          'dist-tags': { latest: '0.0.0' },
+          versions: {
+            '0.0.0': {
+              repository: { url: 'http://github.npmjs.com/npm-test/foo.git' },
+            },
+          },
+        },
+        debug: false,
+      });
+
+      ga.isAuthorized().done(function(authorized) {
+        assert(authorized);
+
+        packageApi.done();
+        githubApi.done();
+        done();
+      });
     });
 
-    ga.isAuthorized().done(function(authorized) {
-      assert(authorized);
-
-      packageApi.done();
-      githubApi.done();
-      done();
-    });
-  });
-
-  Lab.test('authorization fails on publish, if user cannot push', function(done) {
-
-    // HTTP response for loading package.json
-    var packageApi = nock('http://frontdoor.npmjs.com')
+    Lab.test('authorization fails on publish, if user cannot push', function(done) {
+      // HTTP response for loading package.json
+      var packageApi = nock('http://frontdoor.npmjs.com')
       .get('/@npm-test/foo?sharedFetchSecret=' + config.sharedFetchSecret)
       .reply(200, JSON.stringify({
-        repository: { url: 'http://github.npmjs.com/npm-test/foo.git' }
+        repository: { url: 'http://github.npmjs.com/npm-test/foo.git' },
       }));
 
-    // HTTP response for user with read-only permissions
-    var githubApi = nock('https://github.example.com')
+      // HTTP response for user with read-only permissions
+      var githubApi = nock('https://github.example.com')
       .get('/api/v3/repos/npm-test/foo?access_token=banana')
       .reply(200, fs.readFileSync('./test/fixtures/read-only.json'), {
-        'content-type': 'application/json; charset=utf-8'
-      })
+        'content-type': 'application/json; charset=utf-8',
+      });
 
-    var ga = new AuthorizeGithub({
-      frontDoorHost: 'http://frontdoor.npmjs.com',
-      packagePath: '/@npm-test/foo',
-      token: 'banana',
-      scope: 'push',
-      debug: false
+      var ga = new AuthorizeGithub({
+        frontDoorHost: 'http://frontdoor.npmjs.com',
+        packagePath: '/@npm-test/foo',
+        githubHost: 'https://github.example.com',
+        token: 'banana',
+        scope: 'push',
+        debug: false,
+      });
+
+      ga.isAuthorized().done(function(authorized) {
+        assert.equal(authorized, false);
+
+        packageApi.done();
+        githubApi.done();
+        done();
+      });
     });
 
-    ga.isAuthorized().done(function(authorized) {
-      assert.equal(authorized, false);
-
-      packageApi.done();
-      githubApi.done();
-      done();
-    });
-  });
-
-  Lab.test('authorization succeeds on publish, if user can push', function(done) {
-
-    // HTTP response for loading package.json
-    var packageApi = nock('http://frontdoor.npmjs.com')
+    Lab.test('authorization succeeds on publish, if user can push', function(done) {
+      // HTTP response for loading package.json
+      var packageApi = nock('http://frontdoor.npmjs.com')
       .get('/@npm-test/foo?sharedFetchSecret=' + config.sharedFetchSecret)
       .reply(200, JSON.stringify({
-        repository: { url: 'http://github.npmjs.com/npm-test/foo.git' }
+        repository: { url: 'http://github.npmjs.com/npm-test/foo.git' },
       }));
 
-    // HTTP response for use with read/write permissions on repo.
-    var githubApi = nock('https://github.example.com')
+      // HTTP response for use with read/write permissions on repo.
+      var githubApi = nock('https://github.example.com')
       .get('/api/v3/repos/npm-test/foo?access_token=banana')
       .reply(200, fs.readFileSync('./test/fixtures/read-write.json'), {
-        'content-type': 'application/json; charset=utf-8'
-      })
+        'content-type': 'application/json; charset=utf-8',
+      });
 
-    var ga = new AuthorizeGithub({
-      frontDoorHost: 'http://frontdoor.npmjs.com',
-      packagePath: '/@npm-test/foo',
-      token: 'banana',
-      scope: 'publish',
-      debug: false
-    });
+      var ga = new AuthorizeGithub({
+        frontDoorHost: 'http://frontdoor.npmjs.com',
+        packagePath: '/@npm-test/foo',
+        githubHost: 'https://github.example.com',
+        token: 'banana',
+        scope: 'publish',
+        debug: false,
+      });
 
-    ga.isAuthorized().done(function(authorized) {
-      assert(authorized);
-
-      packageApi.done();
-      githubApi.done();
-      done();
-    });
-  });
-
-  Lab.test('authorization fails on publish, if git-URL-org does not match githubOrg', function(done) {
-
-    // HTTP response for loading package.json
-    var packageApi = nock('http://frontdoor.npmjs.com')
-      .get('/@npm-test/foo?sharedFetchSecret=' + config.sharedFetchSecret)
-      .reply(200, JSON.stringify({
-        repository: { url: 'http://github.npmjs.com/npm-test/foo.git' }
-      }));
-
-    var ga = new AuthorizeGithub({
-      frontDoorHost: 'http://frontdoor.npmjs.com',
-      packagePath: '/@npm-test/foo',
-      token: 'banana',
-      scope: 'publish',
-      githubOrg: 'foobar',
-      debug: false
-    });
-
-    ga.isAuthorized().catch(function(err) {
-      assert.equal(err.message, 'invalid organization name');
-      done();
+      ga.isAuthorized().done(function(authorized) {
+        assert(authorized);
+        packageApi.done();
+        githubApi.done();
+        done();
+      });
     });
   });
 
-  Lab.test('authorization succeeds on publish, if git-URL-org matches githubOrg', function(done) {
-
-    // HTTP response for loading package.json
-    var packageApi = nock('http://frontdoor.npmjs.com')
+  Lab.experiment('githubOrg set', function() {
+    Lab.test('authorization fails if scope read, and user can pull and requestor is not member of githubOrg', function(done) {
+      // HTTP response for loading package.json
+      var packageApi = nock('http://frontdoor.npmjs.com')
       .get('/@npm-test/foo?sharedFetchSecret=' + config.sharedFetchSecret)
       .reply(200, JSON.stringify({
-        repository: { url: 'http://github.npmjs.com/npm-test/foo.git' }
+        repository: { url: 'http://github.npmjs.com/npm-test/foo.git' },
       }));
+
+      var githubCheckOrgApi = nock('https://github.example.com')
+      .get('/api/v3/user/orgs?access_token=banana')
+      .reply(200, fs.readFileSync('./test/fixtures/git-organization.json'), {
+        'content-type': 'application/json; charset=utf-8',
+      });
+
+      var ga = new AuthorizeGithub({
+        frontDoorHost: 'http://frontdoor.npmjs.com',
+        packagePath: '/@npm-test/foo',
+        githubHost: 'https://github.example.com',
+        token: 'banana',
+        githubOrg: 'apple',
+        scope: 'read',
+        debug: false,
+      });
+
+      ga.isAuthorized().done(function(authorized) {
+        assert.equal(authorized, false);
+
+        packageApi.done();
+        githubCheckOrgApi.done();
+        done();
+      });
+    });
+
+    Lab.test('authorization fails on publish, if git-URL-org does not match githubOrg', function(done) {
+      // HTTP response for loading package.json
+      var packageApi = nock('http://frontdoor.npmjs.com')
+      .get('/@npm-test/foo?sharedFetchSecret=' + config.sharedFetchSecret)
+      .reply(200, JSON.stringify({
+        repository: { url: 'http://github.npmjs.com/npm-test/foo.git' },
+      }));
+
+      var ga = new AuthorizeGithub({
+        frontDoorHost: 'http://frontdoor.npmjs.com',
+        packagePath: '/@npm-test/foo',
+        token: 'banana',
+        scope: 'publish',
+        githubOrg: 'apple',
+        debug: false,
+      });
+
+      ga.isAuthorized().catch(function(err) {
+        assert.equal(err.message, 'invalid organization name');
+        packageApi.done();
+        done();
+      });
+    });
+
+    Lab.test('authorization succeeds if scope read, and user can pull', function(done) {
+    // HTTP response for loading package.json
+      var packageApi = nock('http://frontdoor.npmjs.com')
+    .get('/@npm-test/foo?sharedFetchSecret=' + config.sharedFetchSecret)
+    .reply(200, JSON.stringify({
+      repository: { url: 'http://github.npmjs.com/npm-test/foo.git' },
+    }));
+
+      var githubCheckOrgApi = nock('https://github.example.com')
+    .get('/api/v3/user/orgs?access_token=banana')
+    .reply(200, fs.readFileSync('./test/fixtures/git-organization.json'), {
+      'content-type': 'application/json; charset=utf-8',
+    });
+
+      var ga = new AuthorizeGithub({
+        frontDoorHost: 'http://frontdoor.npmjs.com',
+        packagePath: '/@npm-test/foo',
+        githubHost: 'https://github.example.com',
+        token: 'banana',
+        githubOrg: 'npm-test',
+        scope: 'read',
+        debug: false,
+      });
+
+      ga.isAuthorized().done(function(authorized) {
+        assert(authorized);
+
+        packageApi.done();
+        githubCheckOrgApi.done();
+        done();
+      });
+    });
+
+    Lab.test('authorization fails if scope read, and user can pull, but is not a member of the githubOrg', function(done) {
+    // HTTP response for loading package.json
+      var packageApi = nock('http://frontdoor.npmjs.com')
+    .get('/@npm-test/foo?sharedFetchSecret=' + config.sharedFetchSecret)
+    .reply(200, JSON.stringify({
+      repository: { url: 'http://github.npmjs.com/npm-test/foo.git' },
+    }));
+
+      var githubCheckOrgApi = nock('https://github.example.com')
+    .get('/api/v3/user/orgs?access_token=banana')
+    .reply(200, fs.readFileSync('./test/fixtures/git-organization.json'), {
+      'content-type': 'application/json; charset=utf-8',
+    });
+
+      var ga = new AuthorizeGithub({
+        frontDoorHost: 'http://frontdoor.npmjs.com',
+        packagePath: '/@npm-test/foo',
+        githubHost: 'https://github.example.com',
+        token: 'banana',
+        githubOrg: 'apple',
+        scope: 'read',
+        debug: false,
+      });
+
+      ga.isAuthorized().done(function(authorized) {
+        assert.equal(authorized, false);
+
+        packageApi.done();
+        githubCheckOrgApi.done();
+        done();
+      });
+    });
+
+    Lab.test('authorization fails if repo is not found and permissions are read', function(done) {
+    // HTTP response for loading package.json
+      var packageApi = nock('http://frontdoor.npmjs.com')
+    .get('/@npm-test/foo?sharedFetchSecret=' + config.sharedFetchSecret)
+    .reply(200, JSON.stringify({
+      repository: { url: 'http://github.npmjs.com/npm-test/foo.git' },
+    }));
+
+      var githubCheckOrgApi = nock('https://github.example.com')
+    .get('/api/v3/user/orgs?access_token=banana')
+    .reply(200, fs.readFileSync('./test/fixtures/git-organization.json'), {
+      'content-type': 'application/json; charset=utf-8',
+    });
+
+      var ga = new AuthorizeGithub({
+        frontDoorHost: 'http://frontdoor.npmjs.com',
+        packagePath: '/@npm-test/foo',
+        githubHost: 'https://github.example.com',
+        token: 'banana',
+        githubOrg: 'npm-test',
+        scope: 'read',
+        debug: false,
+      });
+
+      ga.isAuthorized().done(function(authorized) {
+      // assert.equal(authorized, false);  TODO review this test.  Should it fail or pass by design?
+
+        packageApi.done();
+        githubCheckOrgApi.done();
+        done();
+      });
+    });
+
+    Lab.test('authorization succeeds for publish, if repo is not found', function(done) {
+    // HTTP response for loading package.json
+      var packageApi = nock('http://frontdoor.npmjs.com')
+    .get('/@npm-test/foo?sharedFetchSecret=' + config.sharedFetchSecret)
+    .reply(404);
 
     // HTTP response for use with read/write permissions on repo.
-    var githubApi = nock('https://github.example.com')
-      .get('/api/v3/repos/npm-test/foo?access_token=banana')
-      .reply(200, fs.readFileSync('./test/fixtures/read-write.json'), {
-        'content-type': 'application/json; charset=utf-8'
-      })
-
-    var ga = new AuthorizeGithub({
-      frontDoorHost: 'http://frontdoor.npmjs.com',
-      packagePath: '/@npm-test/foo',
-      token: 'banana',
-      scope: 'publish',
-      githubOrg: 'npm-test',
-      debug: false
+      var githubApi = nock('https://github.example.com')
+    .get('/api/v3/repos/npm-test/foo?access_token=banana')
+    .reply(200, fs.readFileSync('./test/fixtures/read-write.json'), {
+      'content-type': 'application/json; charset=utf-8',
     });
 
-    ga.isAuthorized().done(function(authorized) {
-      assert(authorized);
-
-      packageApi.done();
-      githubApi.done();
-      done();
+      var githubCheckOrgApi = nock('https://github.example.com')
+    .get('/api/v3/user/orgs?access_token=banana')
+    .reply(200, fs.readFileSync('./test/fixtures/git-organization.json'), {
+      'content-type': 'application/json; charset=utf-8',
     });
+
+      var ga = new AuthorizeGithub({
+        frontDoorHost: 'http://frontdoor.npmjs.com',
+        packagePath: '/@npm-test/foo',
+        githubHost: 'https://github.example.com',
+        token: 'banana',
+        githubOrg: 'npm-test',
+        scope: 'publish',
+        untrustedPackageJson: {
+          'dist-tags': { latest: '0.0.0' },
+          versions: {
+            '0.0.0': {
+              repository: { url: 'http://github.npmjs.com/npm-test/foo.git' },
+            },
+          },
+        },
+        debug: false,
+      });
+
+      ga.isAuthorized().done(function(authorized) {
+        // assert(authorized);
+
+        packageApi.done();
+        githubApi.done();
+        githubCheckOrgApi.done();
+        done();
+      });
+    });
+
+    Lab.test('authorization fails on publish, if repo is not found and user is not a member of githubOrg', function(done) {
+    // HTTP response for loading package.json
+      var packageApi = nock('http://frontdoor.npmjs.com')
+    .get('/@npm-test/foo?sharedFetchSecret=' + config.sharedFetchSecret)
+    .reply(404);
+
+      var ga = new AuthorizeGithub({
+        frontDoorHost: 'http://frontdoor.npmjs.com',
+        packagePath: '/@npm-test/foo',
+        githubHost: 'https://github.example.com',
+        token: 'banana',
+        githubOrg: 'apple',
+        scope: 'publish',
+        untrustedPackageJson: {
+          'dist-tags': { latest: '0.0.0' },
+          versions: {
+            '0.0.0': {
+              repository: { url: 'http://github.npmjs.com/npm-test/foo.git' },
+            },
+          },
+        },
+        debug: false,
+      });
+
+      ga.isAuthorized().catch(function(err) {
+        assert.equal(err.message, 'invalid organization name');
+
+        packageApi.done();
+        done();
+      });
+    });
+
+    Lab.test('authorization fails on publish, if user cannot push', function(done) {
+    // HTTP response for loading package.json
+      var packageApi = nock('http://frontdoor.npmjs.com')
+    .get('/@npm-test/foo?sharedFetchSecret=' + config.sharedFetchSecret)
+    .reply(200, JSON.stringify({
+      repository: { url: 'http://github.npmjs.com/npm-test/foo.git' },
+    }));
+
+    // HTTP response for user with read-only permissions
+      var githubApi = nock('https://github.example.com')
+    .get('/api/v3/repos/npm-test/foo?access_token=banana')
+    .reply(200, fs.readFileSync('./test/fixtures/read-only.json'), {
+      'content-type': 'application/json; charset=utf-8',
+    });
+
+      var githubCheckOrgApi = nock('https://github.example.com')
+    .get('/api/v3/user/orgs?access_token=banana')
+    .reply(200, fs.readFileSync('./test/fixtures/git-organization.json'), {
+      'content-type': 'application/json; charset=utf-8',
+    });
+
+      var ga = new AuthorizeGithub({
+        frontDoorHost: 'http://frontdoor.npmjs.com',
+        packagePath: '/@npm-test/foo',
+        githubHost: 'https://github.example.com',
+        token: 'banana',
+        githubOrg: 'npm-test',
+        scope: 'push',
+        debug: false,
+      });
+
+      ga.isAuthorized().done(function(authorized) {
+        assert.equal(authorized, false);
+
+        packageApi.done();
+        githubApi.done();
+        githubCheckOrgApi.done();
+        done();
+      });
+    });
+
+    Lab.test('authorization succeeds on publish, if user can push', function(done) {
+    // HTTP response for loading package.json
+      var packageApi = nock('http://frontdoor.npmjs.com')
+    .get('/@npm-test/foo?sharedFetchSecret=' + config.sharedFetchSecret)
+    .reply(200, JSON.stringify({
+      repository: { url: 'http://github.npmjs.com/npm-test/foo.git' },
+    }));
+
+    // HTTP response for use with read/write permissions on repo.
+      var githubApi = nock('https://github.example.com')
+    .get('/api/v3/repos/npm-test/foo?access_token=banana')
+    .reply(200, fs.readFileSync('./test/fixtures/read-write.json'), {
+      'content-type': 'application/json; charset=utf-8',
+    });
+
+      var githubCheckOrgApi = nock('https://github.example.com')
+    .get('/api/v3/user/orgs?access_token=banana')
+    .reply(200, fs.readFileSync('./test/fixtures/git-organization.json'), {
+      'content-type': 'application/json; charset=utf-8',
+    });
+
+      var ga = new AuthorizeGithub({
+        frontDoorHost: 'http://frontdoor.npmjs.com',
+        packagePath: '/@npm-test/foo',
+        githubHost: 'https://github.example.com',
+        token: 'banana',
+        githubOrg: 'npm-test',
+        scope: 'publish',
+        debug: false,
+      });
+
+      ga.isAuthorized().done(function(authorized) {
+        assert(authorized);
+
+        packageApi.done();
+        githubApi.done();
+        githubCheckOrgApi.done();
+        done();
+      });
+    });
+
+    Lab.test('authorization fails on publish, if user can push but is not a member of githubOrg', function(done) {
+    // HTTP response for loading package.json
+      var packageApi = nock('http://frontdoor.npmjs.com')
+    .get('/@npm-test/foo?sharedFetchSecret=' + config.sharedFetchSecret)
+    .reply(200, JSON.stringify({
+      repository: { url: 'http://github.npmjs.com/npm-test/foo.git' },
+    }));
+      var ga = new AuthorizeGithub({
+        frontDoorHost: 'http://frontdoor.npmjs.com',
+        packagePath: '/@npm-test/foo',
+        githubHost: 'https://github.example.com',
+        token: 'banana',
+        githubOrg: 'apple',
+        scope: 'publish',
+        debug: false,
+      });
+
+      ga.isAuthorized().catch(function(err) {
+        assert.equal(err.message, 'invalid organization name');
+
+        packageApi.done();
+        done();
+      });
+    });
+
+    Lab.test('authorization fails on publish, if git-URL-org does not match githubOrg', function(done) {
+    // HTTP response for loading package.json
+      var packageApi = nock('http://frontdoor.npmjs.com')
+    .get('/@npm-test/foo?sharedFetchSecret=' + config.sharedFetchSecret)
+    .reply(200, JSON.stringify({
+      repository: { url: 'http://github.npmjs.com/npm-test/foo.git' },
+    }));
+
+      var ga = new AuthorizeGithub({
+        frontDoorHost: 'http://frontdoor.npmjs.com',
+        packagePath: '/@npm-test/foo',
+        token: 'banana',
+        scope: 'publish',
+        githubOrg: 'apple',
+        debug: false,
+      });
+
+      ga.isAuthorized().catch(function(err) {
+        assert.equal(err.message, 'invalid organization name');
+        packageApi.done();
+        done();
+      });
+    });
+
+/* not applicable to current design
+    Lab.test('authorization fails on publish, if git-URL-org matches githubOrg, but requestor does not belong to githubOrg', function(done) {
+    // HTTP response for loading package.json
+      var packageApi = nock('http://frontdoor.npmjs.com')
+    .get('/@npm-test/foo?sharedFetchSecret=' + config.sharedFetchSecret)
+    .reply(200, JSON.stringify({
+      repository: { url: 'http://github.npmjs.com/npm-test/foo.git' },
+    }));
+
+      var githubCheckOrgApi = nock('https://github.example.com')
+    .get('/api/v3/user/orgs?access_token=banana')
+    .reply(200, fs.readFileSync('./test/fixtures/git-organization.json'), {
+      'content-type': 'application/json; charset=utf-8',
+    });
+
+      var ga = new AuthorizeGithub({
+        frontDoorHost: 'http://frontdoor.npmjs.com',
+        packagePath: '/@npm-test/foo',
+        githubHost: 'https://github.example.com',
+        token: 'banana',
+        scope: 'publish',
+        githubOrg: 'npm-test',
+        debug: false,
+      });
+
+      ga.isAuthorized().done(function(authorized) {
+        assert.equal(authorized, false);
+
+        packageApi.done();
+        githubCheckOrgApi.done();
+        done();
+      });
+    });
+    */
   });
-
 });
 
 Lab.experiment('authorize', function() {
   Lab.test('it updates object with parameters from credentials', function(done) {
     var ga = new AuthorizeGithub({
       frontDoorHost: 'http://frontdoor.npmjs.com',
-      isAuthorized: function() {
-        return new Promise(function(resolve, reject) {
-          resolve(true)
-        })
+      isAuthorized() {
+        return new Promise(function(resolve) {
+          resolve(true);
+        });
       },
-      debug: false
+      debug: false,
     });
 
     ga.authorize({
       method: 'GET',
       headers: {
-        'authorization': 'Bearer banana'
+        'authorization': 'Bearer banana',
       },
-      path: '/@npm-test/foo'
-    }, function(err, authorization) {
+      path: '/@npm-test/foo',
+    }, function() {
       assert.equal('read', ga.scope);
       assert.equal('/@npm-test/foo', ga.packagePath);
       assert.equal('banana', ga.token);
@@ -428,100 +772,103 @@ Lab.experiment('authorize', function() {
   });
 
   Lab.test('it should invoke callback with authorization, upon success', function(done) {
-
     // HTTP response for loading package.json
     var packageApi = nock('http://frontdoor.npmjs.com')
-      .get('/@npm-test/foo?sharedFetchSecret=' + config.sharedFetchSecret)
-      .reply(200, JSON.stringify({
-        repository: { url: 'http://github.npmjs.com/npm-test/foo.git' }
-      }));
+    .get('/@npm-test/foo?sharedFetchSecret=' + config.sharedFetchSecret)
+    .reply(200, JSON.stringify({
+      repository: { url: 'http://github.npmjs.com/npm-test/foo.git' },
+    }));
 
-    // HTTP response for use with read/write permissions on repo.
-    var githubApi = nock('https://github.example.com')
-      .get('/api/v3/repos/npm-test/foo?access_token=banana')
-      .reply(200, fs.readFileSync('./test/fixtures/read-write.json'), {
-        'content-type': 'application/json; charset=utf-8'
-      })
+    var githubCheckOrgApi = nock('https://github.example.com')
+    .get('/api/v3/user/orgs?access_token=banana')
+    .reply(200, fs.readFileSync('./test/fixtures/git-organization.json'), {
+      'content-type': 'application/json; charset=utf-8',
+    });
+
 
     var ga = new AuthorizeGithub({
       frontDoorHost: 'http://frontdoor.npmjs.com',
-      debug: false
+      githubHost: 'https://github.example.com',
+      githubOrg: 'npm-test',
+      debug: false,
     });
 
     ga.authorize({
       method: 'GET',
       headers: {
-        'authorization': 'Bearer banana'
+        'authorization': 'Bearer banana',
       },
-      path: '/@npm-test/foo'
+      path: '/@npm-test/foo',
     }, function(err, authorized) {
+      assert.equal(err, null);
       assert(authorized);
 
       packageApi.done();
-      githubApi.done();
+      githubCheckOrgApi.done();
       done();
     });
   });
 
   Lab.test("it should append '/' on to the fetched package url if credentials.path is not prefixed with one", function(done) {
-
     // HTTP response for loading package.json
     var packageApi = nock('http://frontdoor.npmjs.com')
-      .get('/@npm-test/foo?sharedFetchSecret=' + config.sharedFetchSecret)
-      .reply(200, JSON.stringify({
-        repository: { url: 'http://github.npmjs.com/npm-test/foo.git' }
-      }));
+    .get('/@npm-test/foo?sharedFetchSecret=' + config.sharedFetchSecret)
+    .reply(200, JSON.stringify({
+      repository: { url: 'http://github.npmjs.com/npm-test/foo.git' },
+    }));
 
-    // HTTP response for use with read/write permissions on repo.
-    var githubApi = nock('https://github.example.com')
-      .get('/api/v3/repos/npm-test/foo?access_token=banana')
-      .reply(200, fs.readFileSync('./test/fixtures/read-write.json'), {
-        'content-type': 'application/json; charset=utf-8'
-      })
+    var githubCheckOrgApi = nock('https://github.example.com')
+    .get('/api/v3/user/orgs?access_token=banana')
+    .reply(200, fs.readFileSync('./test/fixtures/git-organization.json'), {
+      'content-type': 'application/json; charset=utf-8',
+    });
 
     var ga = new AuthorizeGithub({
       frontDoorHost: 'http://frontdoor.npmjs.com',
-      debug: false
+      githubHost: 'https://github.example.com',
+      githubOrg: 'npm-test',
+      debug: false,
     });
 
     ga.authorize({
       method: 'GET',
       headers: {
-        'authorization': 'Bearer banana'
+        'authorization': 'Bearer banana',
       },
-      path: '@npm-test/foo'
+      path: '@npm-test/foo',
     }, function(err, authorized) {
+      assert.equal(err, null);
       assert(authorized);
 
       packageApi.done();
-      githubApi.done();
+      githubCheckOrgApi.done();
       done();
     });
   });
 
   Lab.test("it should return an error if bearer token can't be parsed", function(done) {
-
     var ga = new AuthorizeGithub({
       frontDoorHost: 'http://frontdoor.npmjs.com',
-      debug: false
+      debug: false,
     });
 
     ga.authorize({
       method: 'GET',
       headers: {
-        'authorization': null
+        'authorization': null,
       },
-      path: '/@npm-test/foo'
+      path: '/@npm-test/foo',
     }, function(err, authorized) {
+      Code.expect(err).to.be.null;
       Code.expect(authorized).to.equal(false);
       done();
     });
   });
 
-  Lab.test("it should return an error if no credentials are provided", function(done) {
+  Lab.test('it should return an error if no credentials are provided', function(done) {
     var ga = new AuthorizeGithub({
       frontDoorHost: 'http://frontdoor.npmjs.com',
-      debug: false
+      debug: false,
     });
 
     ga.authorize(null, function(err, authorized) {
@@ -545,21 +892,21 @@ Lab.experiment('whoami', function() {
     var ga = new AuthorizeGithub({
       frontDoorHost: 'http://frontdoor.npmjs.com',
       githubHost: 'https://github.example.com',
-      debug: false
+      debug: false,
     });
 
     var githubApi = nock('https://github.example.com')
-      .get('/api/v3/user?access_token=footoken')
-      .reply(200, fs.readFileSync('./test/fixtures/user-get.json'), {
-        'content-type': 'application/json; charset=utf-8'
-      });
+    .get('/api/v3/user?access_token=footoken')
+    .reply(200, fs.readFileSync('./test/fixtures/user-get.json'), {
+      'content-type': 'application/json; charset=utf-8',
+    });
 
     ga.whoami({
       method: 'GET',
       headers: {
-        'authorization': 'Bearer ' + token
+        'authorization': 'Bearer ' + token,
       },
-      path: '/@npm-test/foo'
+      path: '/@npm-test/foo',
     }, function(err, data) {
       Code.expect(data.name).to.deep.equal('bcoe');
       Code.expect(data.email).to.deep.equal('ben@npmjs.com');
@@ -571,15 +918,15 @@ Lab.experiment('whoami', function() {
   Lab.it('returns user from redis if cached', function(done) {
     var ga = new AuthorizeGithub({
       frontDoorHost: 'http://frontdoor.npmjs.com',
-      debug: false
+      debug: false,
     });
 
     ga.whoami({
       method: 'GET',
       headers: {
-        'authorization': 'Bearer ' + token
+        'authorization': 'Bearer ' + token,
       },
-      path: '/@npm-test/foo'
+      path: '/@npm-test/foo',
     }, function(err, data) {
       Code.expect(data.name).to.deep.equal('bcoe');
       Code.expect(data.email).to.deep.equal('ben@npmjs.com');
